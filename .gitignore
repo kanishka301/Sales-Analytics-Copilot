@@ -1,6 +1,37 @@
+# Virtual environments
+venv/
 .venv/
+env/
+
+# Python
 __pycache__/
 *.py[cod]
+.ipynb_checkpoints/
+
+# Large datasets
+*.csv
+*.parquet
+*.xlsx
+*.xls
+
+# Model artifacts
+*.pkl
+*.joblib
+*.h5
+*.keras
+*.pth
+*.pt
+
+# Logs and temporary files
+*.log
+logs/
+temp/
+tmp/
+
+# Environment variables
 .env
-.streamlit/secrets.toml
-data/processed
+.env.*
+
+# IDE
+.vscode/
+.idea/
