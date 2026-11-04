@@ -1,0 +1,11 @@
+{
+  "questions": 5,
+  "accuracy_overall": 0.8,
+  "accuracy_by_type": {
+    "number": 0.8
+  },
+  "avg_steps": 1.6,
+  "share_with_tool_error": 0.0,
+  "ungrounded_tracking_available": false,
+  "avg_seconds": 34.5
+}

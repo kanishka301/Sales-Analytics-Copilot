@@ -1,0 +1,6 @@
+question,expected,answer,correct,time_seconds
+What is the total number of units sold?,14254766.0,"The total number of units sold across all stores and items in the dataset is 14,254,766.",True,25.51
+What is the total revenue?,39240512.12997659,"The total revenue across all stores and categories in the dataset is $39,240,512.13.",True,39.96
+How many distinct stores are present?,,Server disconnected without sending a response.,False,44.27
+What is the total revenue in 2015?,8398453.029996406,"The total revenue in 2015 was $8,398,453.03.",True,19.02
+How many units were sold in California?,6212941.0,"A total of 6,212,941 units were sold in California across the available dataset (2011-01-29 to 2016-05-22).",True,35.86
