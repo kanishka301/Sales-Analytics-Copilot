@@ -1,0 +1,62 @@
+[
+  {
+    "id": "Q01",
+    "category": "sql",
+    "question": "What is the total number of units sold in the dataset?",
+    "status": "ERROR",
+    "reason": "ProxyError: 407 Proxy Authentication Required",
+    "expected_tools": "run_sql",
+    "used_tools": "",
+    "steps": 0,
+    "elapsed_seconds": 0,
+    "answer": ""
+  },
+  {
+    "id": "Q02",
+    "category": "sql",
+    "question": "What is the total revenue in the dataset?",
+    "status": "ERROR",
+    "reason": "ProxyError: 407 Proxy Authentication Required",
+    "expected_tools": "run_sql",
+    "used_tools": "",
+    "steps": 0,
+    "elapsed_seconds": 0,
+    "answer": ""
+  },
+  {
+    "id": "Q03",
+    "category": "sql",
+    "question": "Show total units sold by state.",
+    "status": "ERROR",
+    "reason": "ProxyError: 407 Proxy Authentication Required",
+    "expected_tools": "run_sql",
+    "used_tools": "",
+    "steps": 0,
+    "elapsed_seconds": 0,
+    "answer": ""
+  },
+  {
+    "id": "Q04",
+    "category": "sql",
+    "question": "Which product category has the highest total revenue?",
+    "status": "ERROR",
+    "reason": "ProxyError: 407 Proxy Authentication Required",
+    "expected_tools": "run_sql",
+    "used_tools": "",
+    "steps": 0,
+    "elapsed_seconds": 0,
+    "answer": ""
+  },
+  {
+    "id": "Q05",
+    "category": "sql",
+    "question": "Show the top 10 stores by total sales revenue.",
+    "status": "ERROR",
+    "reason": "ProxyError: 407 Proxy Authentication Required",
+    "expected_tools": "run_sql",
+    "used_tools": "",
+    "steps": 0,
+    "elapsed_seconds": 0,
+    "answer": ""
+  }
+]
