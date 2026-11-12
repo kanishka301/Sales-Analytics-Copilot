@@ -9,10 +9,6 @@ Random train/test splits are never used (they leak the future in time series).
 
 Metric: WAPE = sum|actual - forecast| / sum|actual|   (lower is better)
 Skill vs seasonal-naive = 1 - WAPE_model / WAPE_snaive  (positive = better than baseline)
-
-Run:
-    python -m src.forecasting.evaluate                       # fast: no ETS
-    python -m src.forecasting.evaluate --models naive,snaive,mavg4,theta,ets,lgbm   # full (slow)
 """
 import argparse
 import time

@@ -1,7 +1,6 @@
 """
 Feature engineering for weekly forecasting at store x department level (70 series).
 
-KEY IDEA (read this, interviewers ask about it):
 We forecast HORIZON (=4) weeks ahead with ONE model. Every lag / rolling feature is
 shifted by at least HORIZON weeks, so at forecast time all of them are already known.
 That avoids leakage and avoids recursive forecasting.

@@ -1,6 +1,4 @@
 """
-run_sql: lets the LLM query the data, safely.
-
 Safety layers:
   1. validate_sql: one statement, must start with SELECT/WITH, forbidden keywords blocked
   2. database opened READ-ONLY with external file access disabled (src/db.py), so even a missed

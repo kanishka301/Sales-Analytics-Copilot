@@ -6,8 +6,7 @@ Baselines / statistical (one model per series, history only):
 Machine learning (one GLOBAL model across all 70 series):
     lgbm  -> median forecast + 10%/90% quantile models = an 80% prediction interval
 
-The LightGBM target is log1p(units). Quantiles are preserved by monotone transforms,
-so predicting quantiles on the log scale and transforming back is valid.
+The LightGBM target is log1p(units).
 """
 import warnings
 

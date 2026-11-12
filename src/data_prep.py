@@ -9,10 +9,6 @@ STEP 1: Data preparation.
    (M5 has no price for those weeks, so a "0 sales" there is not a real zero).
 5. Builds two tables: sales_daily and sales_weekly.
 6. Prints sanity checks so you can confirm the data looks right.
-
-from the project root:
-    python -m src.data_prep                 # sample of 600 items
-    python -m src.data_prep --n-items 0     # all 3,049 items (needs more RAM/time)
 """
 import argparse
 import time
