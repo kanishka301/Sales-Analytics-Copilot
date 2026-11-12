@@ -1,0 +1,42 @@
+[
+  {
+    "question": "What were total units sold in 2015?",
+    "sql": "SELECT SUM(units) AS total_units FROM sales_daily WHERE year = 2015"
+  },
+  {
+    "question": "Which state had the highest revenue in 2014?",
+    "sql": "SELECT state_id, SUM(revenue) AS revenue FROM sales_daily WHERE year = 2014 GROUP BY state_id ORDER BY revenue DESC LIMIT 1"
+  },
+  {
+    "question": "Monthly revenue for the FOODS category in 2015",
+    "sql": "SELECT month, SUM(revenue) AS revenue FROM sales_daily WHERE year = 2015 AND cat_id = 'FOODS' GROUP BY month ORDER BY month"
+  },
+  {
+    "question": "Top 5 departments by units in Texas in 2013",
+    "sql": "SELECT dept_id, SUM(units) AS units FROM sales_daily WHERE year = 2013 AND state_id = 'TX' GROUP BY dept_id ORDER BY units DESC LIMIT 5"
+  },
+  {
+    "question": "Year over year revenue growth percentage for Wisconsin from 2014 to 2015",
+    "sql": "SELECT (SUM(CASE WHEN year = 2015 THEN revenue END) / SUM(CASE WHEN year = 2014 THEN revenue END) - 1) * 100 AS growth_pct FROM sales_daily WHERE state_id = 'WI'"
+  },
+  {
+    "question": "Average selling price per unit by category in 2015",
+    "sql": "SELECT cat_id, SUM(revenue) / SUM(units) AS avg_price_per_unit FROM sales_daily WHERE year = 2015 AND units > 0 GROUP BY cat_id"
+  },
+  {
+    "question": "Weekly units for store CA_1 between two dates",
+    "sql": "SELECT week_start, SUM(units) AS units FROM sales_weekly WHERE store_id = 'CA_1' AND week_start BETWEEN DATE '2015-01-01' AND DATE '2015-03-31' GROUP BY week_start ORDER BY week_start"
+  },
+  {
+    "question": "Average daily units on SNAP days versus non-SNAP days in California",
+    "sql": "SELECT snap, AVG(day_units) AS avg_daily_units FROM (SELECT date, snap, SUM(units) AS day_units FROM sales_daily WHERE state_id = 'CA' GROUP BY date, snap) GROUP BY snap"
+  },
+  {
+    "question": "Which events had the highest average daily units?",
+    "sql": "SELECT event_name_1, AVG(day_units) AS avg_daily_units FROM (SELECT date, event_name_1, SUM(units) AS day_units FROM sales_daily WHERE event_name_1 IS NOT NULL GROUP BY date, event_name_1) GROUP BY event_name_1 ORDER BY avg_daily_units DESC LIMIT 5"
+  },
+  {
+    "question": "How many distinct items and stores are in the data?",
+    "sql": "SELECT COUNT(DISTINCT item_id) AS items, COUNT(DISTINCT store_id) AS stores FROM sales_daily"
+  }
+]

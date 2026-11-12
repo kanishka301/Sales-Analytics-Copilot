@@ -1,0 +1,6 @@
+id,type,correct,detail,steps,tool_errors,invalid_json,ungrounded,seconds,answer
+Q01,number,True,"truth=14,254,766.00",2,0,0,0,31.0,"The total number of units sold in the entire dataset is 14,254,766."
+Q02,number,True,"truth=8,398,453.03",2,0,0,0,27.2,"The total revenue generated in 2015 was $8,398,453.03."
+Q03,number,False,"ServerError: 504 DEADLINE_EXCEEDED. {'error': {'code': 504, 'message': 'Deadline expired before operation could complete.', 'status': 'DEADLINE_EXCEEDED'}}",0,0,0,0,49.7,
+Q04,number,True,"truth=6,212,941.00",2,0,0,0,32.9,"A total of 6,212,941 units were sold in California across the available dataset (2011-01-29 to 2016-05-22)."
+Q05,number,True,truth=2.98,2,0,0,0,31.9,The average selling price per unit across all items and stores in 2015 was approximately $2.98.

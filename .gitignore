@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Secrets
+.env
+.streamlit/secrets.toml
+
+# IDE
+.vscode/
+.idea/
+
+# Large datasets and databases
+data/raw/*.csv
+data/processed/*.duckdb
+data/processed/*.parquet
+
+# Evaluation outputs
+evaluation/results/
+
+# OS
+.DS_Store
+Thumbs.db
