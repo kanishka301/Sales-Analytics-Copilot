@@ -31,17 +31,14 @@ def check_inputs():
     if missing:
         names = "\n  ".join(str(p) for p in missing)
         raise SystemExit(
-            "Missing raw files:\n  " + names +
-            "\n\nDownload the M5 data from Kaggle (competition: m5-forecasting-accuracy),"
-            "\nunzip it, and put calendar.csv, sell_prices.csv and "
-            "sales_train_evaluation.csv in data/raw/"
+            "Missing raw files:\n  " + names
         )
 
 
 def build(n_items):
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
     if DB_PATH.exists():
-        DB_PATH.unlink()  # always rebuild from scratch so results are reproducible
+        DB_PATH.unlink()  # deletes existed db file and always rebuild from scratch so results are reproducible
     con = duckdb.connect(str(DB_PATH))
 
     # ---- 1. Load raw CSVs -------------------------------------------------
@@ -67,7 +64,6 @@ def build(n_items):
     # We sample items (products), not rows, so every sampled item keeps all
     # 10 stores. That matters later for state/store root-cause analysis.
     if n_items and n_items > 0:
-        print(f"Sampling {n_items} items (deterministic) ...")
         con.execute(f"""
             CREATE TABLE sales_wide AS
             SELECT * FROM sales_wide_full
@@ -82,7 +78,6 @@ def build(n_items):
     con.execute("DROP TABLE sales_wide_full")
 
     # ---- 3. Wide -> long --------------------------------------------------
-    print("Reshaping wide -> long (UNPIVOT) ...")
     con.execute("""
         CREATE TABLE sales_long AS
         UNPIVOT sales_wide
@@ -93,7 +88,7 @@ def build(n_items):
 
     # ---- 4. Join calendar + prices ----------------------------------------
     # INNER JOIN with prices removes pre-launch rows (no price = not on sale yet).
-    print("Joining calendar and prices ...")
+    print("Joining calendar and prices(building sales_daily table)...")
     con.execute("""
         CREATE TABLE sales_daily AS
         SELECT
@@ -141,7 +136,6 @@ def build(n_items):
 
 
 def sanity_checks(con):
-    print("\n" + "=" * 60)
     print("SANITY CHECKS (read these, they tell you if the data is right)")
     print("=" * 60)
 
@@ -167,19 +161,7 @@ def sanity_checks(con):
     ).fetchone()[0]
     print(f"share of item-store-days with zero sales: {zero_share:.1%} "
           "(retail data is sparse, this is normal)")
-
-    print("\nUnits by category:")
-    for cat, units in con.execute(
-        "SELECT cat_id, SUM(units) FROM sales_daily GROUP BY cat_id ORDER BY 2 DESC"
-    ).fetchall():
-        print(f"  {cat:<12}{int(units):>14,}")
-
-    print("\nUnits by state:")
-    for st, units in con.execute(
-        "SELECT state_id, SUM(units) FROM sales_daily GROUP BY state_id ORDER BY 2 DESC"
-    ).fetchall():
-        print(f"  {st:<12}{int(units):>14,}")
-
+    
     print("\nSample rows:")
     print(con.execute("SELECT * FROM sales_daily LIMIT 3").fetchdf().T.to_string())
 
