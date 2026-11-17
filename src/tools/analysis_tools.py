@@ -18,10 +18,12 @@ def _date(x, name: str) -> dt.date:
     try:
         return dt.date.fromisoformat(str(x)[:10])
     except Exception:
-        raise ValueError(f"{name} must be a date like 2015-03-31, got {x!r}")
+        raise ValueError(f"{name} must be a date like 2015-03-31")
 
 
-def _where(filters, start=None, end=None):
+def _where(filters, start=None, end=None): #he actual values are passed separately through params.
+#Why?
+# Parameterized queries prevent user-provided values from being directly inserted into SQL, reducing SQL injection risks.
     clauses, params = [], []
     if start is not None:
         clauses.append("date >= ?")
@@ -57,9 +59,17 @@ def _daily_df(cur, start, end, filters) -> pd.DataFrame:
 
 def _single_state(filters) -> bool:
     f = filters or {}
-    n = lambda k: len(f[k]) if isinstance(f.get(k), (list, tuple)) else (1 if k in f else 0)
-    return n("state_id") == 1 or n("store_id") == 1
+    for key in ("state_id", "store_id"):
+        value = filters.get(key)
+        if value is not None:
+            return len(value) == 1 if isinstance(value, (list, tuple)) else True
 
+    return False
+# \[
+# \log(units)=\text{series effects}+\text{week effects}
+# +\beta\log(price)
+# \]
+# ere, \(\beta\) is the price elasticity.
 
 # ------------------------------------------------------------------ decompose_change
 def decompose_change(period_a_start, period_a_end, period_b_start, period_b_end,
@@ -70,7 +80,7 @@ def decompose_change(period_a_start, period_a_end, period_b_start, period_b_end,
     a0, a1 = _date(period_a_start, "period_a_start"), _date(period_a_end, "period_a_end")
     b0, b1 = _date(period_b_start, "period_b_start"), _date(period_b_end, "period_b_end")
     if (a1 - a0).days != (b1 - b0).days:
-        return {"error": f"Periods must have equal length (A={(a1 - a0).days + 1} days, B={(b1 - b0).days + 1} days)."}
+        return {"error": f"Periods must have equal length."}
 
     cur = _cursor()
     a, b = _period_df(cur, a0, a1, filters), _period_df(cur, b0, b1, filters)
@@ -93,7 +103,8 @@ def decompose_change(period_a_start, period_a_end, period_b_start, period_b_end,
                     "'new_or_lost_items' means item-store series with zero units in one of the two periods; "
                     "it includes sparse low-volume items, not only real launches or delistings."]
     return out
-
+ ##ull hypothesis: Price has no association with units sold after accounting for the fixed effects.
+ # #Alternative hypothesis: Price has a non-zero association with units sold.
 
 # ------------------------------------------------------------------ detect_anomalies
 def detect_anomalies(filters=None, start=None, end=None, metric="units") -> dict:

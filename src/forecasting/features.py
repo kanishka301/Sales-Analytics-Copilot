@@ -5,16 +5,13 @@ We forecast HORIZON (=4) weeks ahead with ONE model. Every lag / rolling feature
 shifted by at least HORIZON weeks, so at forecast time all of them are already known.
 That avoids leakage and avoids recursive forecasting.
 
-Known-in-advance features (price level, SNAP days, event days, calendar) are allowed
-because a retailer plans them ahead. avg_price is the plain mean of item prices (NOT
-revenue/units), so it carries no information about realised sales.
 """
 import numpy as np
 import pandas as pd
 
 from src.config import HORIZON
 
-LAGS = sorted({l for l in (HORIZON, HORIZON + 1, HORIZON + 2, HORIZON + 3, 13, 26, 52) if l >= HORIZON})
+LAGS = sorted(set(range(HORIZON, HORIZON + 4)) | {13, 26, 52})
 ROLLS = (4, 8, 13)
 CATEGORICAL = ["store_id", "dept_id"]
 NUMERIC = (
@@ -42,7 +39,7 @@ ORDER BY series_id, week_start
 """
 
 
-def load_weekly_panel(cursor) -> pd.DataFrame:
+def load_weekly_panel(cursor) -> pd.DataFrame: # loading and cleaning the panel as df
     """One row per (store, department, week)."""
     df = cursor.execute(PANEL_SQL).fetchdf()
     df["week_start"] = pd.to_datetime(df["week_start"])
@@ -62,28 +59,40 @@ def make_features(panel: pd.DataFrame, horizon: int = HORIZON) -> pd.DataFrame:
         df[f"lag_{l}"] = g_units.shift(l)
 
     shifted = g_units.shift(horizon)
-    for w in ROLLS:
-        df[f"rmean_{w}"] = shifted.groupby(sid).transform(
-            lambda s, w=w: s.rolling(w, min_periods=max(2, w // 2)).mean()
+
+    for w in ROLLS: #rolling 4 back for each series and averaging 
+        df[f"rmean_{w}"] = (
+            shifted.groupby(sid)
+            .rolling(w, min_periods=max(2, w // 2))
+            .mean()
+            .reset_index(level=0, drop=True)
         )
     df["trend_ratio"] = (df["rmean_4"] / df["rmean_13"]).replace([np.inf, -np.inf], np.nan)
 
     price_shift = df.groupby("series_id")["avg_price"].shift(horizon)
-    price_base = price_shift.groupby(sid).transform(lambda s: s.rolling(13, min_periods=4).mean())
-    df["price_ratio"] = (df["avg_price"] / price_base).replace([np.inf, -np.inf], np.nan)
 
+    price_base = ( #13 weeks rolling avg of price requiring atleast 4 weeks
+        price_shift.groupby(sid)
+        .rolling(13, min_periods=4)
+        .mean()
+        .reset_index(level=0, drop=True)
+    )
+
+    df["price_ratio"] = df["avg_price"] / price_base #compares the current week's average price with the historical 13-week average price, shifted to respect the forecast horizon.
+    df["price_ratio"] = df["price_ratio"].replace([np.inf, -np.inf], np.nan)
+    
     df["woy"] = df["week_start"].dt.isocalendar().week.astype(int)
     df["month"] = df["week_start"].dt.month
 
-    for c in CATEGORICAL:
+    for c in CATEGORICAL: #useful because LightGBM supports categorical features.
         df[c] = pd.Categorical(df[c], categories=sorted(df[c].astype(str).unique()))
     return df
 
 
-def extend_with_future(panel: pd.DataFrame, horizon: int = HORIZON) -> pd.DataFrame:
+def extend_with_future(panel: pd.DataFrame, horizon: int = HORIZON) -> pd.DataFrame: #Creating future placeholder rows
     """
     Append `horizon` empty weeks per series so make_features can build their features.
-    Assumptions (stated in the README): price stays at its last 4-week average,
+    Assumptions: price stays at its last 4-week average,
     no SNAP days and no events are assumed for the future weeks.
     """
     rows = []

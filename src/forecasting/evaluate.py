@@ -16,7 +16,7 @@ import time
 import numpy as np
 import pandas as pd
 
-from src.config import FIGURES_DIR, HORIZON, REPORTS_DIR
+from src.config import HORIZON, REPORTS_DIR
 from src.forecasting.features import FEATURES, load_weekly_panel, make_features
 from src.forecasting.models import BASELINES, fit_lgbm_bundle, predict_bundle
 
@@ -58,7 +58,6 @@ def run_backtest(panel: pd.DataFrame, n_origins: int, models: list) -> pd.DataFr
             bundle = fit_lgbm_bundle(train)
             p = predict_bundle(bundle, test[FEATURES])
             frames.append(base.assign(model="lgbm", pred=p["mid"], lo=p["lo"], hi=p["hi"]))
-        print(f"  origin {o.date()} done in {time.time() - t0:.0f}s")
 
     return pd.concat(frames, ignore_index=True)
 
@@ -88,36 +87,7 @@ def metrics_table(res: pd.DataFrame) -> pd.DataFrame:
         mt.loc[(mt["model"] == "lgbm") & (mt["level"] == "all_series"), "coverage_80"] = cov
     return mt.round(4)
 
-
-def make_figures(res: pd.DataFrame, mt: pd.DataFrame):
-    import matplotlib
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
-
-    FIGURES_DIR.mkdir(parents=True, exist_ok=True)
-
-    piv = mt[mt["level"].isin(["all_series", "total"])].pivot(index="model", columns="level", values="wape")
-    ax = piv.sort_values("all_series").plot(kind="bar", figsize=(8, 4))
-    ax.set_ylabel("WAPE (lower is better)")
-    ax.set_title("Backtest accuracy by model")
-    plt.xticks(rotation=0)
-    plt.tight_layout()
-    plt.savefig(FIGURES_DIR / "backtest_wape.png", dpi=150)
-    plt.close()
-
-    if "lgbm" in set(res["model"]):
-        d = res[res["model"] == "lgbm"].groupby("week_start")[["actual", "pred", "lo", "hi"]].sum()
-        fig, ax = plt.subplots(figsize=(9, 4))
-        ax.plot(d.index, d["actual"], label="actual", color="black")
-        ax.plot(d.index, d["pred"], label="LightGBM forecast", color="tab:blue")
-        ax.fill_between(d.index, d["lo"], d["hi"], alpha=0.2, label="80% interval (sum of series bounds, conservative)")
-        ax.set_title("Total weekly units: forecast vs actual (backtest weeks)")
-        ax.legend()
-        plt.tight_layout()
-        plt.savefig(FIGURES_DIR / "backtest_forecast_vs_actual.png", dpi=150)
-        plt.close()
-
-
+    
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--n-origins", type=int, default=5, help="number of 4-week test blocks")
@@ -138,7 +108,7 @@ def main():
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     res.to_csv(REPORTS_DIR / "forecast_backtest.csv", index=False)
     mt.to_csv(REPORTS_DIR / "forecast_metrics.csv", index=False)
-    make_figures(res, mt)
+
 
     print("\nWAPE by model (lower is better):")
     show = mt[mt["level"].isin(["all_series", "total"])].pivot(

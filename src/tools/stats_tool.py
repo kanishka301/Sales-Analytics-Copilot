@@ -35,7 +35,7 @@ def price_volume_effect(a: pd.DataFrame, b: pd.DataFrame, key: str = "id") -> di
     ra, qa, qb = float(m["r_a"].sum()), float(m["q_a"].sum()), float(m["q_b"].sum())
 
     def share(x):
-        return _r(100 * x / total) if total else None
+        return _r(100 * x / total) if total else None # each effect's share of the total revenue change.
 
     return {
         "revenue_a": _r(ra), "revenue_b": _r(m["r_b"].sum()),
@@ -71,6 +71,7 @@ def flag_effect(daily: pd.DataFrame, flag: str) -> dict:
     d = daily.copy()
     d["wd"] = pd.to_datetime(d["date"]).dt.dayofweek
     d["adj"] = d["units"] / d.groupby("wd")["units"].transform("mean")
+    # This helps reduce weekday-related bias in the event comparison.
     on, off = d.loc[d[flag].astype(bool), "adj"], d.loc[~d[flag].astype(bool), "adj"]
     if len(on) < 3 or len(off) < 3:
         return {"note": f"Too few '{flag}' days ({len(on)}) vs others ({len(off)}) to test."}
@@ -96,8 +97,8 @@ def price_elasticity(df: pd.DataFrame) -> dict:
     d = d[d.groupby("id")["id"].transform("size") >= 8]
     if len(d) < 50 or d["id"].nunique() < 3:
         return {"error": "Not enough data for an elasticity estimate (need 3+ series with 8+ weeks)."}
-
     d["y"], d["x"] = np.log(d["units"]), np.log(d["avg_price"])
+    #Why use a log-log regression?# Because its slope can be interpreted as price elasticity.
     for _ in range(6):  # alternating demeaning = two-way fixed effects
         for col in ("y", "x"):
             d[col] = d[col] - d.groupby("id")[col].transform("mean")

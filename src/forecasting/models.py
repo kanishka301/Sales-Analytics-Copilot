@@ -4,7 +4,7 @@ Models.
 Baselines / statistical (one model per series, history only):
     naive, snaive (same week last year), mavg4, theta, ets
 Machine learning (one GLOBAL model across all 70 series):
-    lgbm  -> median forecast + 10%/90% quantile models = an 80% prediction interval
+    lgbm  -> mean forecast + 10%/90% quantile models = an 80% prediction interval
 
 The LightGBM target is log1p(units).
 """
@@ -35,16 +35,14 @@ def moving_average(hist: np.ndarray, h: int, w: int = 4) -> np.ndarray:
 def theta(hist: np.ndarray, h: int) -> np.ndarray:
     try:
         from statsmodels.tsa.forecasting.theta import ThetaModel
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            res = ThetaModel(pd.Series(hist.astype(float)), period=52, deseasonalize=True).fit()
-            return np.clip(np.asarray(res.forecast(h)), 0, None)
+        
+        res = ThetaModel(pd.Series(hist.astype(float)), period=52, deseasonalize=True).fit()
+        return np.clip(np.asarray(res.forecast(h)), 0, None) #np.clip ensures negative predictions replaced by 0 
     except Exception:
         return seasonal_naive(hist, h)
 
 
 def ets(hist: np.ndarray, h: int) -> np.ndarray:
-    """Holt-Winters (damped additive trend, additive yearly seasonality). Slow: ~1-2s per series."""
     try:
         from statsmodels.tsa.holtwinters import ExponentialSmoothing
         with warnings.catch_warnings():
@@ -56,7 +54,9 @@ def ets(hist: np.ndarray, h: int) -> np.ndarray:
             return np.clip(np.asarray(fit.forecast(h)), 0, None)
     except Exception:
         return seasonal_naive(hist, h)
-
+ #Why do we have fallback models?
+#Both Theta and ETS can encounter numerical problems, convergence failures or insufficient data.
+#Rather than allowing one problematic series to crash the entire forecasting pipeline, you provide a fallback.
 
 BASELINES = {
     "naive": naive,
@@ -82,15 +82,17 @@ def fit_lgbm_bundle(train: pd.DataFrame) -> dict:
     for name, alpha in QUANTILES.items():
         models[name] = lgb.LGBMRegressor(objective="quantile", alpha=alpha, **PARAMS).fit(X, y)
     return models
-
-
+#Uses the standard regression objective, which minimizes squared errors by default.
+# trnaformation of y = useful in retail forecasting because sales distributions can be highly skewed.also handles zero sales
 def predict_bundle(models: dict, X: pd.DataFrame) -> dict:
     out = {k: np.clip(np.expm1(m.predict(X)), 0, None) for k, m in models.items()}
     # quantile models are trained separately and can cross; fix that
     out["lo"] = np.minimum(out["lo"], out["mid"])
     out["hi"] = np.maximum(out["hi"], out["mid"])
     return out
-
+#Why three separate models instead of one?
+# Because standard regression learns a central estimate, whereas quantile regression directly learns conditional percentiles.
+# A standard deviation-based interval would require additional assumptions about the residual distribution and its variance. Quantile regression avoids requiring a normally distributed error assumption.
 
 # ------------------------------------------------- final model + real forecast
 FINAL_PATH = MODELS_DIR / "lgbm_final.joblib"
@@ -107,7 +109,7 @@ def train_final(panel: pd.DataFrame) -> dict:
     feats = make_features(panel)
     train = feats.dropna(subset=[f"lag_{HORIZON}"])
     models = fit_lgbm_bundle(train)
-    return {"models": models, "trained_through": str(panel["week_start"].max().date()),
+    return {"models": models,
             "fingerprint": _fingerprint(panel)}
 
 

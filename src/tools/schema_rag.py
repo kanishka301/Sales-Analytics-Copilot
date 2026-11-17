@@ -1,7 +1,7 @@
 """Retrieve relevant schema notes and SQL examples using lightweight TF-IDF search."""
 import json
 import re
-from functools import lru_cache
+from functools import lru_cache #cache the search index
 
 from src.config import KNOWLEDGE_DIR
 
@@ -25,7 +25,7 @@ def _load_chunks():
     return chunks
 
 
-@lru_cache(maxsize=1)
+@lru_cache(maxsize=1) #lru_cache stores the result of this function.
 def _search_index():
     from sklearn.feature_extraction.text import TfidfVectorizer
     chunks = _load_chunks()
@@ -40,6 +40,6 @@ def lookup_schema(question: str, k: int = 4) -> dict:
 
     chunks, vectorizer, matrix = _search_index()
     scores = cosine_similarity(vectorizer.transform([question]), matrix)[0]
-    best = scores.argsort()[::-1][:max(1, int(k))]
-    matches = [chunks[i] for i in best if scores[i] > 0]
+    best = scores.argsort()[::-1][:max(1, int(k))] #argsort() sorts the indices by score.
+    matches = [chunks[i] for i in best if scores[i] > 0] #Remove zero-similarity matches
     return {"retriever": "tfidf", "context": matches}
